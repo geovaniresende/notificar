@@ -19,16 +19,12 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
       FirebaseNotificationService();
 
   final Map<String, String> notificationMessages = {
-    'Carro preso':
-        "Olá! Seu carro está bloqueando o meu veículo. Já estou de saída! 😊🚗",
-    'Farol ligado':
-        "Ei, amigo! Os faróis do seu carro estão ligados. Para evitar a descarga da bateria, que tal dar uma conferida? 💡🔋",
-    'Vidro aberto':
-        "Atenção! Um dos vidros do seu carro está aberto. Melhor fechar para evitar surpresas. 😉🚘",
+    'Carro preso': "Olá! Seu carro está bloqueando o meu veículo. 🚗",
+    'Farol ligado': "Os faróis do seu carro estão ligados. 💡🔋",
+    'Vidro aberto': "Um dos vidros do seu carro está aberto. 🚘",
     'Estacionamento irregular':
-        "Ops! Seu carro está estacionado de forma irregular. Sugiro que ajuste a posição para evitar transtornos. 🚗🅿",
-    'Outro':
-        "Notificação importante sobre seu veículo! Por favor, vá até o seu carro dar uma conferida. 🔔",
+        "Seu carro está estacionado de forma irregular. 🅿",
+    'Outro': "Notificação importante sobre seu veículo! 🔔",
   };
 
   void _sendNotification(String plate, String reason) async {
@@ -37,16 +33,20 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     String senderId = FirebaseAuth.instance.currentUser?.uid ?? "desconhecido";
 
     try {
-      // Criando notificação para quem enviou
-      await _firestore.collection('completedRequests').add({
+      // Criando notificação na aba "Realizadas"
+      await _firestore
+          .collection('sentRequests')
+          .doc(senderId)
+          .collection('notifications')
+          .add({
         'plate': plate,
         'reason': reason,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
-        'sentBy': senderId, // Quem enviou a notificação
+        'sentBy': senderId,
       });
 
-      // Criando notificação para quem vai receber
+      // Criando notificação na aba "Recebidas"
       await _firestore
           .collection('receivedRequests')
           .doc(plate)
@@ -56,10 +56,10 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
         'plate': plate,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
-        'sentBy': senderId, // Quem enviou
+        'sentBy': senderId,
       });
 
-      // Verifica se o dono do veículo tem um token de notificação
+      // Enviar notificação push
       var userDoc = await _firestore.collection('users').doc(plate).get();
       if (userDoc.exists) {
         String? token = userDoc.data()?['fcmToken'];
@@ -87,10 +87,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text(
-          'Notificação',
-          style: TextStyle(color: Colors.amber),
-        ),
+        title: const Text('Notificação', style: TextStyle(color: Colors.amber)),
         backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.amber),
@@ -109,8 +106,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
               decoration: InputDecoration(
                 labelText: 'Placa',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
+                    borderRadius: BorderRadius.circular(10.0)),
               ),
             ),
             const SizedBox(height: 20),
@@ -127,10 +123,8 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               ),
-              child: const Text(
-                'Notificar',
-                style: TextStyle(color: Colors.amber),
-              ),
+              child: const Text('Notificar',
+                  style: TextStyle(color: Colors.amber)),
             ),
           ],
         ),

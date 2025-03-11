@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Para usar o Clipboard
 
 class SobreScreen extends StatefulWidget {
-  const SobreScreen({Key? key}) : super(key: key);
+  const SobreScreen({super.key});
 
   @override
   _SobreScreenState createState() => _SobreScreenState();

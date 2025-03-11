@@ -10,38 +10,38 @@ class QuadrosScreen extends StatefulWidget {
 class _QuadrosScreenState extends State<QuadrosScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  String? userUID;
   String? userPlate;
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _getUserPlate();
+    _getUserData();
   }
 
-  Future<void> _getUserPlate() async {
+  Future<void> _getUserData() async {
     User? user = _auth.currentUser;
     if (user != null) {
+      userUID = user.uid;
+      print("Usuário autenticado: $userUID");
+
       DocumentSnapshot userDoc =
-          await _firestore.collection('users').doc(user.uid).get();
+          await _firestore.collection('users').doc(userUID).get();
 
       if (userDoc.exists && userDoc.data() != null) {
         setState(() {
-          userPlate = userDoc['plate']; // Pegando a placa do usuário logado
+          userPlate = (userDoc.data() as Map<String, dynamic>)['plate'];
+          print("Placa carregada: $userPlate");
           isLoading = false;
         });
-        print('Placa do usuário: $userPlate'); // Debugging
       } else {
-        setState(() {
-          userPlate = null; // Se não encontrar o usuário, definir como nulo
-          isLoading = false;
-        });
+        print("Nenhum documento encontrado para o usuário.");
+        setState(() => isLoading = false);
       }
     } else {
-      setState(() {
-        userPlate = null; // Se o usuário não estiver logado, definir como nulo
-        isLoading = false;
-      });
+      print("Nenhum usuário autenticado.");
+      setState(() => isLoading = false);
     }
   }
 
@@ -55,143 +55,118 @@ class _QuadrosScreenState extends State<QuadrosScreen> {
           title:
               const Text('Solicitações', style: TextStyle(color: Colors.amber)),
           backgroundColor: Colors.black,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.amber),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
           bottom: TabBar(
             indicatorColor: Colors.amber,
             tabs: [
               Tab(
-                  child: Center(
-                      child: Text('Realizadas',
-                          style: TextStyle(color: Colors.amber)))),
+                  child: Text('Realizadas',
+                      style: TextStyle(color: Colors.amber))),
               Tab(
-                  child: Center(
-                      child: Text('Recebidas',
-                          style: TextStyle(color: Colors.amber)))),
+                  child:
+                      Text('Recebidas', style: TextStyle(color: Colors.amber))),
             ],
           ),
         ),
         body: isLoading
             ? const Center(child: CircularProgressIndicator())
-            : userPlate == null
-                ? const Center(child: Text("Erro ao carregar a placa."))
-                : TabBarView(
-                    children: [
-                      _buildRequestList(),
-                      _buildReceivedNotifications(),
-                    ],
-                  ),
+            : TabBarView(
+                children: [
+                  _buildSentRequests(),
+                  _buildReceivedRequests(),
+                ],
+              ),
       ),
     );
   }
 
-  /// Aba "Realizadas" - solicitações feitas pelo usuário logado
-  Widget _buildRequestList() {
+  Widget _buildSentRequests() {
+    if (userUID == null) {
+      print("Erro: userUID é null ao buscar notificações enviadas.");
+      return const Center(child: Text("Erro ao carregar notificações."));
+    }
+
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore
-          .collection('completedRequests')
-          .where('userPlate',
-              isEqualTo: userPlate) // Filtrando pela placa do usuário
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return const Center(child: Text("Erro ao carregar solicitações."));
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("Nenhuma solicitação encontrada."));
-        }
-
-        return _buildList(snapshot.data!.docs);
-      },
-    );
-  }
-
-  /// Aba "Recebidas" - solicitações feitas para a placa do usuário logado
-  Widget _buildReceivedNotifications() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _firestore
-          .collection('receivedRequests')
-          .doc(userPlate!) // Buscando na coleção da placa do usuário
+          .collection('sentRequests')
+          .doc(userUID)
           .collection('notifications')
           .snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return const Center(child: Text("Erro ao carregar notificações."));
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text("Nenhuma notificação recebida."));
-        }
-
-        return _buildList(snapshot.data!.docs);
+        return _buildList(snapshot, "Realizadas");
       },
     );
   }
 
-  /// Método genérico para renderizar as listas de solicitações
-  Widget _buildList(List<DocumentSnapshot> docs) {
-    return ListView.builder(
-      itemCount: docs.length,
-      itemBuilder: (context, index) {
-        final data = docs[index].data() as Map<String, dynamic>? ?? {};
+  Widget _buildReceivedRequests() {
+    if (userPlate == null) {
+      print("Erro: userPlate é null ao buscar notificações recebidas.");
+      return const Center(child: Text("Erro ao carregar notificações."));
+    }
 
-        final reason = data['reason'] ?? 'Sem motivo especificado';
-        final plate = data['plate'] ?? 'Placa desconhecida';
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore
+          .collection('receivedRequests')
+          .doc(userPlate)
+          .collection('notifications')
+          .snapshots(),
+      builder: (context, snapshot) {
+        return _buildList(snapshot, "Recebidas");
+      },
+    );
+  }
 
-        return Card(
-          color: Colors.black,
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4.0),
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: Image.asset('assets/images/razao.png'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(reason,
-                          style: const TextStyle(color: Colors.amber)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4.0),
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: Image.asset('assets/images/placa.png'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(plate,
-                          style: const TextStyle(color: Colors.amber)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+  Widget _buildList(AsyncSnapshot<QuerySnapshot> snapshot, String tipo) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (snapshot.hasError) {
+      print("Erro ao carregar notificações de $tipo: ${snapshot.error}");
+      return const Center(child: Text("Erro ao carregar dados."));
+    }
+    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+      print("Nenhuma notificação encontrada para $tipo.");
+      return Center(child: Text("Nenhuma notificação."));
+    }
+
+    print("Notificações carregadas para $tipo: ${snapshot.data!.docs.length}");
+
+    return ListView(
+      padding: EdgeInsets.all(10),
+      children: snapshot.data!.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 10),
+          padding: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.black, // Fundo preto
+            borderRadius: BorderRadius.circular(10), // Bordas arredondadas
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoRow('assets/images/placa.png', data['plate']),
+              SizedBox(height: 5),
+              _buildInfoRow('assets/images/razao.png', data['reason']),
+            ],
           ),
         );
-      },
+      }).toList(),
+    );
+  }
+
+  Widget _buildInfoRow(String imagePath, String? text) {
+    return Row(
+      children: [
+        Image.asset(imagePath, width: 20, height: 20), // Ícone pequeno
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text ?? "Desconhecido",
+            style: TextStyle(color: Colors.amber, fontSize: 16),
+          ),
+        ),
+      ],
     );
   }
 }
