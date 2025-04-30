@@ -1,0 +1,25 @@
+workflows:
+  ios:
+    name: iOS workflow
+    max_build_duration: 60
+    environment:
+      vars:
+        APP_ID: "com.example.notificar"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: "com.example.notificar"  # Valor literal aqui
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+      - name: Build app
+        script: |
+          flutter build ios --release
+      - name: Run tests
+        script: |
+          flutter test
+    artifacts:
+      - build/ios/ipa/*.ipa

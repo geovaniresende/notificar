@@ -1,0 +1,52 @@
+plugins {
+    id "com.android.application"
+    // START: FlutterFire Configuration
+    id 'com.google.gms.google-services' // Plugin do Google Services
+    // END: FlutterFire Configuration
+    id "kotlin-android"
+    // O Flutter Gradle Plugin deve ser aplicado após os plugins do Android e Kotlin.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.new.notificar"  // Defina o namespace do seu aplicativo
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId = "com.new.notificar"  // Substitua com o ID do seu app
+        minSdk = 23
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            debuggable false  // Evita erro de assinatura se não houver um keystore configurado
+            signingConfig signingConfigs.debug  // Se tiver um keystore, troque por signingConfigs.release
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.google.firebase:firebase-messaging:23.2.1'  // Firebase Cloud Messaging
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  // Para compatibilidade com APIs Java 8
+}
+
+flutter {
+    source = "../.."
+}

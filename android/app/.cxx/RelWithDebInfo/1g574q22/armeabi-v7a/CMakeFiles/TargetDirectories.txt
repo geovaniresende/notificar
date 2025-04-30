@@ -1,0 +1,2 @@
+C:/Users/Geovani/Desktop/notificar/android/app/.cxx/RelWithDebInfo/1g574q22/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/Geovani/Desktop/notificar/android/app/.cxx/RelWithDebInfo/1g574q22/armeabi-v7a/CMakeFiles/rebuild_cache.dir

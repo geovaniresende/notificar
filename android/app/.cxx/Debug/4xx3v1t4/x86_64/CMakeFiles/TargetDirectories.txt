@@ -1,0 +1,2 @@
+C:/Users/Geovani/Desktop/arquivo funcional/notificar-main/android/app/.cxx/Debug/4xx3v1t4/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/Geovani/Desktop/arquivo funcional/notificar-main/android/app/.cxx/Debug/4xx3v1t4/x86_64/CMakeFiles/rebuild_cache.dir

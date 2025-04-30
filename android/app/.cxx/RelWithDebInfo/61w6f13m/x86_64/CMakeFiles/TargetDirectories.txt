@@ -1,0 +1,2 @@
+C:/Users/Geovani/Desktop/Nova pasta/notificar-main/android/app/.cxx/RelWithDebInfo/61w6f13m/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/Geovani/Desktop/Nova pasta/notificar-main/android/app/.cxx/RelWithDebInfo/61w6f13m/x86_64/CMakeFiles/rebuild_cache.dir
