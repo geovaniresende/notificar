@@ -4,13 +4,13 @@ workflows:
     max_build_duration: 60
     environment:
       vars:
-        APP_ID: "com.example.notificar"
+        APP_ID: "com.new.notificar"
       flutter: stable
       xcode: latest
       cocoapods: default
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: "com.example.notificar"  # Valor literal aqui
+        bundle_identifier: "com.new.notificar"  # Valor literal aqui
     scripts:
       - name: Install dependencies
         script: |
