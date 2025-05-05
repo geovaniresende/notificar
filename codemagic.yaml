@@ -21,9 +21,8 @@ workflows:
       - name: Set up code signing
         script: |
           mkdir -p ~/certs
-          echo $MY_CERTIFICATE_P12_BASE64 | base64 --decode > ~/certs/certificate.p12
-          echo $MY_PROVISIONING_PROFILE_BASE64 | base64 --decode > ~/certs/profile.mobileprovision
-
+          echo $MY_CERTIFICATE_P12_BASE64 | base64 --decode > ~/certs/notificar.p12
+          echo $MY_PROVISIONING_PROFILE_BASE64 | base64 --decode > ~/certs/notificar.mobileprovision
           security create-keychain -p "" build.keychain
           security import ~/certs/certificate.p12 -k build.keychain -P $CERTIFICATE_PASSWORD -T /usr/bin/codesign
           security list-keychains -s build.keychain
