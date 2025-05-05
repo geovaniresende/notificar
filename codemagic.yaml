@@ -17,29 +17,29 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: "com.new.notificar"
-    scripts:
-      - name: Set up code signing
-        script: |
-          mkdir -p ~/certs
-          echo $MY_CERTIFICATE_P12_BASE64 | base64 --decode > ~/certs/notificar.p12
-          echo $MY_PROVISIONING_PROFILE_BASE64 | base64 --decode > ~/certs/notificar.mobileprovision
-          security create-keychain -p "" build.keychain
-          security import ~/certs/certificate.p12 -k build.keychain -P $CERTIFICATE_PASSWORD -T /usr/bin/codesign
-          security list-keychains -s build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
+  scripts:
+  - name: Set up code signing
+    script: |
+      mkdir -p ~/certs
+      echo $MY_CERTIFICATE_P12_BASE64 | base64 --decode > ~/certs/notificar.p12
+      echo $MY_PROVISIONING_PROFILE_BASE64 | base64 --decode > ~/certs/notificar.mobileprovision
+      security create-keychain -p "" build.keychain
+      security import ~/certs/notificar.p12 -k build.keychain -P $CERTIFICATE_PASSWORD -T /usr/bin/codesign
+      security list-keychains -s build.keychain
+      security default-keychain -s build.keychain
+      security unlock-keychain -p "" build.keychain
 
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          UUID=$(grep UUID -A1 -a ~/certs/profile.mobileprovision | grep -io "[-A-F0-9]\{36\}")
-          cp ~/certs/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
-      - name: Install dependencies
-        script: |
-          flutter pub get
-      - name: Build app
-        script: |
-          flutter build ios --release
-      - name: Run tests
-        script: |
-          flutter test
-    artifacts:
-      - build/ios/ipa/*.ipa
+      mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+      UUID=$(grep UUID -A1 -a ~/certs/notificar.mobileprovision | grep -io "[-A-F0-9]\{36\}")
+      cp ~/certs/notificar.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+  - name: Install dependencies
+    script: |
+      flutter pub get
+  - name: Build app
+    script: |
+      flutter build ios --release
+  - name: Run tests
+    script: |
+      flutter test
+artifacts:
+  - build/ios/ipa/*.ipa
