@@ -10,22 +10,29 @@ workflows:
         DEVELOPMENT_TEAM: "WT5TSJ49FM"
         BUNDLE_ID: "com.new.notificar" 
     scripts:
-      - name: Set up code signing
-        script: |
-          mkdir -p ~/certs
-          echo $CERTIFICATE_P12 | base64 --decode > ~/certs/cert.p12
-          echo $PROVISIONING_PROFILE | base64 --decode > ~/certs/profile.mobileprovision
-          security create-keychain -p "" build.keychain
-          security import ~/certs/cert.p12 -k build.keychain -P $CERTIFICATE_PASSWORD -T /usr/bin/codesign
-          security list-keychains -s build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          UUID=$(grep UUID -A1 -a ~/certs/profile.mobileprovision | grep -io "[-A-F0-9]\{36\}")
-          cp ~/certs/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
-      - name: Get dependencies
-        script: flutter pub get
-      - name: Build IPA
-        script: flutter build ios --release --no-codesign
-    artifacts:
-      - build/ios/ipa/*.ipa
+  - name: Set up code signing
+    script: |
+      mkdir -p ~/certs
+      echo $CERTIFICATE_P12 | base64 --decode > ~/certs/cert.p12
+      echo $PROVISIONING_PROFILE | base64 --decode > ~/certs/profile.mobileprovision
+      security create-keychain -p "" build.keychain
+      security import ~/certs/cert.p12 -k build.keychain -P $CERTIFICATE_PASSWORD -T /usr/bin/codesign
+      security list-keychains -s build.keychain
+      security default-keychain -s build.keychain
+      security unlock-keychain -p "" build.keychain
+      mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+      UUID=$(grep UUID -A1 -a ~/certs/profile.mobileprovision | grep -io "[-A-F0-9]\{36\}")
+      cp ~/certs/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+
+  - name: Get dependencies
+    script: flutter pub get
+
+  - name: Reinstall CocoaPods
+    script: |
+      cd ios
+      rm -rf Pods Podfile.lock
+      pod install
+      cd ..
+
+  - name: Build IPA
+    script: flutter build ios --release --no-codesign
