@@ -9,36 +9,65 @@ workflows:
         CERTIFICATE_PASSWORD: "Nfx6HJcJ"
         DEVELOPMENT_TEAM: "WT5TSJ49FM"
         BUNDLE_ID: "com.new.notificar" 
-    scripts:
-      - name: Set up code signing
-        script: |
-          mkdir -p ~/certs
-          echo $CERTIFICATE_P12 | base64 --decode > ~/certs/cert.p12
-          echo $PROVISIONING_PROFILE | base64 --decode > ~/certs/profile.mobileprovision
-          security create-keychain -p "" build.keychain
-          security import ~/certs/cert.p12 -k build.keychain -P $CERTIFICATE_PASSWORD -T /usr/bin/codesign
-          security list-keychains -s build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          UUID=$(grep UUID -A1 -a ~/certs/profile.mobileprovision | grep -io "[-A-F0-9]\{36\}")
-          cp ~/certs/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+  scripts:
+  - name: Set up code signing
+    script: |
+      mkdir -p ~/certs
+      echo $CERTIFICATE_P12 | base64 --decode > ~/certs/cert.p12
+      echo $PROVISIONING_PROFILE | base64 --decode > ~/certs/profile.mobileprovision
+      security create-keychain -p "" build.keychain
+      security import ~/certs/cert.p12 -k build.keychain -P $CERTIFICATE_PASSWORD -T /usr/bin/codesign
+      security list-keychains -s build.keychain
+      security default-keychain -s build.keychain
+      security unlock-keychain -p "" build.keychain
+      mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+      UUID=$(grep UUID -A1 -a ~/certs/profile.mobileprovision | grep -io "[-A-F0-9]\{36\}")
+      cp ~/certs/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
 
-      - name: Get dependencies
-        script: flutter pub get
+  - name: Get dependencies
+    script: flutter pub get
 
-      - name: Reinstall CocoaPods
-        script: |
-          cd ios
-          rm -rf Pods Podfile.lock
-          pod install
-          cd ..
+  - name: Reinstall CocoaPods
+    script: |
+      cd ios
+      rm -rf Pods Podfile.lock
+      pod install
+      cd ..
 
-      - name: Build IPA
-        script: |
-          flutter build ios --release
-          cd ios
-          # Usando xcodebuild para garantir que a assinatura seja aplicada corretamente
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release archive -archivePath $PWD/build/Runner.xcarchive
-          xcodebuild -exportArchive -archivePath $PWD/build/Runner.xcarchive -exportOptionsPlist exportOptions.plist -exportPath $PWD/build/ios/ipa
-          cd ..
+  - name: Create exportOptions.plist
+    script: |
+      cat > exportOptions.plist <<EOF
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+        <key>method</key>
+        <string>app-store</string>
+        <key>teamID</key>
+        <string>${DEVELOPMENT_TEAM}</string>
+        <key>signingStyle</key>
+        <string>manual</string>
+        <key>provisioningProfiles</key>
+        <dict>
+          <key>${BUNDLE_ID}</key>
+          <string>match AppStore ${BUNDLE_ID}</string>
+        </dict>
+      </dict>
+      </plist>
+      EOF
+
+  - name: Build IPA
+    script: |
+      flutter build ios --release
+      cd ios
+      xcodebuild -workspace Runner.xcworkspace \
+                 -scheme Runner \
+                 -configuration Release \
+                 -archivePath $PWD/build/Runner.xcarchive \
+                 DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
+
+      xcodebuild -exportArchive \
+                 -archivePath $PWD/build/Runner.xcarchive \
+                 -exportOptionsPlist exportOptions.plist \
+                 -exportPath $PWD/build/ios/ipa
+      cd ..
