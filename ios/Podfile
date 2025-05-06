@@ -1,15 +1,24 @@
-# ios/Podfile
+# Defina a versão mínima do iOS
 platform :ios, '13.0'
 
-use_frameworks!
-use_modular_headers!
-
+# Target do projeto, onde as dependências serão adicionadas
 target 'Runner' do
-  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  use_frameworks!
+  use_modular_headers!
+
+  # Dependências necessárias para o projeto, adicione mais conforme precisar
+  pod 'Firebase/Core'
+  pod 'Firebase/Firestore'
+  pod 'Firebase/Auth'
+  # Adicione outros pods necessários aqui
 end
 
+# Configuração pós-instalação para evitar problemas com arm64 no simulador
 post_install do |installer|
   installer.pods_project.targets.each do |target|
-    flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      # A linha abaixo resolve um problema de compatibilidade com a arquitetura arm64 no simulador
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+    end
   end
 end
