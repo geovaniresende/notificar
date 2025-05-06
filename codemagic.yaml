@@ -9,7 +9,7 @@ workflows:
         CERTIFICATE_PASSWORD: "Nfx6HJcJ"
         DEVELOPMENT_TEAM: "WT5TSJ49FM"
         BUNDLE_ID: "com.new.notificar" 
-  scripts:
+scripts:
   - name: Set up code signing
     script: |
       mkdir -p ~/certs
