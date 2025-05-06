@@ -35,4 +35,11 @@ scripts:
       cd ..
 
   - name: Build IPA
-    script: flutter build ios --release --no-codesign
+    script: |
+      # Remover --no-codesign para permitir assinatura
+      flutter build ios --release
+      cd ios
+      # Usando xcodebuild para garantir que a assinatura seja aplicada corretamente
+      xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release archive -archivePath $PWD/build/Runner.xcarchive
+      xcodebuild -exportArchive -archivePath $PWD/build/Runner.xcarchive -exportOptionsPlist exportOptions.plist -exportPath $PWD/build/ios/ipa
+      cd ..
