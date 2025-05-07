@@ -5,11 +5,14 @@ workflows:
       flutter: stable
       xcode: latest
       vars:
+        BUNDLE_ID: com.new.notificar
         DEVELOPMENT_TEAM: WT5TSJ49FM
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: $BUNDLE_ID
     scripts:
       - name: Get Flutter dependencies
-        script: |
-          flutter pub get
+        script: flutter pub get
 
       - name: Install CocoaPods
         script: |
@@ -24,36 +27,12 @@ workflows:
           xcodebuild -workspace Runner.xcworkspace \
                      -scheme Runner \
                      -configuration Release \
-                     -archivePath $PWD/build/Runner.xcarchive \
+                     -archivePath build/Runner.xcarchive \
+                     -destination 'generic/platform=iOS' \
                      -allowProvisioningUpdates \
-                     DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM \
-                     CODE_SIGN_STYLE=Automatic \
                      archive
-
-      - name: Export IPA
-        script: |
-          cat <<EOF > ExportOptions.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>signingStyle</key>
-            <string>automatic</string>
-            <key>teamID</key>
-            <string>${DEVELOPMENT_TEAM}</string>
-            <key>stripSwiftSymbols</key>
-            <true/>
-            <key>compileBitcode</key>
-            <true/>
-            <key>destination</key>
-            <string>export</string>
-          </dict>
-          </plist>
-          EOF
-
           xcodebuild -exportArchive \
                      -archivePath build/Runner.xcarchive \
-                     -exportPath build/ios/ipa \
-                     -exportOptionsPlist ExportOptions.plist
+                     -exportOptionsPlist ExportOptions.plist \
+                     -exportPath build/ipa \
+                     -allowProvisioningUpdates
