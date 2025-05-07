@@ -13,5 +13,11 @@
   <true/>
   <key>compileBitcode</key>
   <true/>
+  <key>provisioningProfiles</key>
+  <dict>
+    <key>com.new.notificar</key>
+    <string>Notificar</string>
+  </dict>
 </dict>
 </plist>
+
