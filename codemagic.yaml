@@ -7,9 +7,10 @@ workflows:
       vars:
         BUNDLE_ID: com.new.notificar
         DEVELOPMENT_TEAM: WT5TSJ49FM
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: $BUNDLE_ID
+
+    ios_signing:
+      distribution_type: app_store
+      bundle_identifier: $BUNDLE_ID
 
     scripts:
       - name: Get Flutter dependencies
@@ -27,10 +28,8 @@ workflows:
           PBXPROJ_FILE="ios/Runner.xcodeproj/project.pbxproj"
           TEAM_ID="$DEVELOPMENT_TEAM"
 
-          # Insere DEVELOPMENT_TEAM onde já existe
           sed -i '' "s/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = $TEAM_ID;/g" $PBXPROJ_FILE
 
-          # Se não existir, adiciona em todos os blocos de build settings
           if ! grep -q "DEVELOPMENT_TEAM = $TEAM_ID;" "$PBXPROJ_FILE"; then
             echo "🔍 DEVELOPMENT_TEAM não encontrado — adicionando manualmente..."
             sed -i '' "/CODE_SIGN_IDENTITY =/a\\
@@ -48,7 +47,7 @@ workflows:
                      -archivePath build/Runner.xcarchive \
                      -destination 'generic/platform=iOS' \
                      -allowProvisioningUpdates \
-                     archive
+                     archive DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
 
       - name: Export iOS App (.ipa)
         script: |
@@ -56,7 +55,8 @@ workflows:
           xcodebuild -exportArchive \
                      -archivePath build/Runner.xcarchive \
                      -exportPath build/ipa \
-                     -allowProvisioningUpdates
+                     -allowProvisioningUpdates \
+                     -exportOptionsPlist ExportOptions.plist
 
     artifacts:
       - build/ipa/*.ipa
