@@ -11,6 +11,12 @@ workflows:
         script: |
           flutter pub get
 
+      - name: Install CocoaPods
+        script: |
+          cd ios
+          pod install
+          cd ..
+
       - name: Build and archive iOS app
         script: |
           flutter build ios --release --no-codesign
@@ -19,6 +25,7 @@ workflows:
                      -scheme Runner \
                      -configuration Release \
                      -archivePath $PWD/build/Runner.xcarchive \
+                     -allowProvisioningUpdates \
                      DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM \
                      CODE_SIGN_STYLE=Automatic \
                      archive
