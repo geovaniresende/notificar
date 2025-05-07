@@ -6,15 +6,12 @@ workflows:
       xcode: latest
       vars:
         DEVELOPMENT_TEAM: WT5TSJ49FM
-      ios_signing:
-        provisioning_profile: auto
-        certificate: auto
     scripts:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
 
-      - name: Build IPA
+      - name: Build and archive iOS app
         script: |
           flutter build ios --release --no-codesign
           cd ios
@@ -22,34 +19,34 @@ workflows:
                      -scheme Runner \
                      -configuration Release \
                      -archivePath $PWD/build/Runner.xcarchive \
-                     archive \
                      DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM \
-                     CODE_SIGN_STYLE=Automatic
+                     CODE_SIGN_STYLE=Automatic \
+                     archive
 
-          xcodebuild -exportArchive \
-                     -archivePath $PWD/build/Runner.xcarchive \
-                     -exportPath $PWD/build/ios/ipa \
-                     -exportOptionsPlist ExportOptions.plist
-
-      - name: Create ExportOptions.plist
+      - name: Export IPA
         script: |
-          cat <<EOF > ios/ExportOptions.plist
+          cat <<EOF > ExportOptions.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
-            <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>signingStyle</key>
-              <string>automatic</string>
-              <key>teamID</key>
-              <string>${DEVELOPMENT_TEAM}</string>
-              <key>stripSwiftSymbols</key>
-              <true/>
-              <key>compileBitcode</key>
-              <true/>
-              <key>destination</key>
-              <string>export</string>
-            </dict>
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>teamID</key>
+            <string>${DEVELOPMENT_TEAM}</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>compileBitcode</key>
+            <true/>
+            <key>destination</key>
+            <string>export</string>
+          </dict>
           </plist>
           EOF
+
+          xcodebuild -exportArchive \
+                     -archivePath build/Runner.xcarchive \
+                     -exportPath build/ios/ipa \
+                     -exportOptionsPlist ExportOptions.plist
