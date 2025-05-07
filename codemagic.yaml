@@ -1,6 +1,6 @@
 workflows:
   ios-manual-signing:
-    name: iOS Build Manual Signing
+    name: iOS Manual Signing
     environment:
       flutter: stable
       xcode: latest
@@ -12,11 +12,32 @@ workflows:
       - name: Get Flutter dependencies
         script: flutter pub get
 
+      - name: Fix Podfile for Codemagic
+        script: |
+          cat > ios/Podfile <<EOF
+          platform :ios, '12.0'
+
+          ENV['FLUTTER_ROOT'] ||= File.expand_path('../flutter')
+          load File.join(ENV['FLUTTER_ROOT'], 'packages', 'flutter_tools', 'bin', 'podhelper.rb')
+
+          target 'Runner' do
+            flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
+          end
+          EOF
+
       - name: Install CocoaPods
         script: |
           cd ios
           pod install
           cd ..
+
+      - name: Force manual code signing in Xcode project
+        script: |
+          pbxproj="ios/Runner.xcodeproj/project.pbxproj"
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' $pbxproj
+          sed -i '' 's/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM;/g' $pbxproj
+          sed -i '' '/PROVISIONING_PROFILE = /d' $pbxproj
+          sed -i '' '/PROVISIONING_PROFILE_SPECIFIER = /d' $pbxproj
 
       - name: Build and archive iOS app
         script: |
@@ -29,13 +50,34 @@ workflows:
                      -destination 'generic/platform=iOS' \
                      -allowProvisioningUpdates \
                      DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM \
+                     CODE_SIGN_STYLE=Manual \
                      CODE_SIGN_IDENTITY="Apple Distribution" \
                      PROVISIONING_PROFILE_SPECIFIER="Notificar" \
                      archive
 
-      - name: Export iOS App (.ipa)
+      - name: Export .ipa
         script: |
           cd ios
+          cat > ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>teamID</key>
+            <string>$DEVELOPMENT_TEAM</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.new.notificar</key>
+              <string>Notificar</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+
           xcodebuild -exportArchive \
                      -archivePath build/Runner.xcarchive \
                      -exportPath build/ipa \
