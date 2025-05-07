@@ -26,6 +26,9 @@ scripts:
       UUID=$(grep UUID -A1 -a ~/certs/profile.mobileprovision | grep -io "[-A-F0-9]\{36\}")
       cp ~/certs/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
 
+  - name: Get dependencies
+    script: flutter pub get
+
   - name: Generate exportOptions.plist
     script: |
       cat <<EOF > ios/exportOptions.plist
@@ -54,9 +57,6 @@ scripts:
       </plist>
       EOF
 
-  - name: Get dependencies
-    script: flutter pub get
-
   - name: Build IPA
     script: |
       flutter build ios --release
@@ -64,3 +64,20 @@ scripts:
       xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release archive -archivePath $PWD/build/Runner.xcarchive DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
       xcodebuild -exportArchive -archivePath $PWD/build/Runner.xcarchive -exportOptionsPlist exportOptions.plist -exportPath $PWD/build/ios/ipa
       cd ..
+
+scripts:
+  - name: Archive
+    script: |
+      cd ios
+      xcodebuild -workspace Runner.xcworkspace \
+        -scheme Runner \
+        -configuration Release \
+        -archivePath build/Runner.xcarchive \
+        DEVELOPMENT_TEAM=WT5TSJ49FM
+
+  - name: Export IPA
+    script: |
+      xcodebuild -exportArchive \
+        -archivePath build/Runner.xcarchive \
+        -exportOptionsPlist exportOptions.plist \
+        -exportPath build/ipa
