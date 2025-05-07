@@ -31,8 +31,14 @@ workflows:
                      -destination 'generic/platform=iOS' \
                      -allowProvisioningUpdates \
                      archive
+
+      - name: Export iOS App (.ipa)
+        script: |
+          cd ios
           xcodebuild -exportArchive \
                      -archivePath build/Runner.xcarchive \
-                     -exportOptionsPlist ExportOptions.plist \
                      -exportPath build/ipa \
                      -allowProvisioningUpdates
+
+    artifacts:
+      - build/ipa/*.ipa
