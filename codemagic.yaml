@@ -7,7 +7,7 @@ workflows:
       vars:
         BUNDLE_ID: com.new.notificar
         DEVELOPMENT_TEAM: WT5TSJ49FM
-
+        CERTIFICATE_PASSWORD: 135013 
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
@@ -34,10 +34,10 @@ workflows:
       - name: Force manual code signing in Xcode project
         script: |
           pbxproj="ios/Runner.xcodeproj/project.pbxproj"
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' $pbxproj
-          sed -i '' 's/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM;/g' $pbxproj
-          sed -i '' '/PROVISIONING_PROFILE = /d' $pbxproj
-          sed -i '' '/PROVISIONING_PROFILE_SPECIFIER = /d' $pbxproj
+          sed -i 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/g' $pbxproj
+          sed -i "s/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM;/g" $pbxproj
+          sed -i '/PROVISIONING_PROFILE = /d' $pbxproj
+          sed -i '/PROVISIONING_PROFILE_SPECIFIER = /d' $pbxproj
 
       - name: Build and archive iOS app
         script: |
