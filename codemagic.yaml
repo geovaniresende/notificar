@@ -26,6 +26,34 @@ workflows:
           UUID=$(grep UUID -A1 -a ~/certs/profile.mobileprovision | grep -io "[-A-F0-9]\{36\}")
           cp ~/certs/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
 
+      - name: Generate exportOptions.plist
+  script: |
+    cat <<EOF > ios/exportOptions.plist
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>method</key>
+        <string>app-store</string>
+        <key>signingStyle</key>
+        <string>manual</string>
+        <key>teamID</key>
+        <string>WT5TSJ49FM</string>
+        <key>provisioningProfiles</key>
+        <dict>
+            <key>com.new.notificar</key>
+            <string>notificar</string>
+        </dict>
+        <key>stripSwiftSymbols</key>
+        <true/>
+        <key>compileBitcode</key>
+        <true/>
+        <key>destination</key>
+        <string>export</string>
+    </dict>
+    </plist>
+    EOF
+   
       - name: Get dependencies
         script: flutter pub get
 
