@@ -10,6 +10,7 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: $BUNDLE_ID
+
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
@@ -19,6 +20,23 @@ workflows:
           cd ios
           pod install
           cd ..
+
+      - name: Patch DEVELOPMENT_TEAM into project.pbxproj
+        script: |
+          echo "🔧 Inserindo DEVELOPMENT_TEAM no project.pbxproj"
+          PBXPROJ_FILE="ios/Runner.xcodeproj/project.pbxproj"
+          TEAM_ID="$DEVELOPMENT_TEAM"
+
+          # Insere DEVELOPMENT_TEAM onde já existe
+          sed -i '' "s/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = $TEAM_ID;/g" $PBXPROJ_FILE
+
+          # Se não existir, adiciona em todos os blocos de build settings
+          if ! grep -q "DEVELOPMENT_TEAM = $TEAM_ID;" "$PBXPROJ_FILE"; then
+            echo "🔍 DEVELOPMENT_TEAM não encontrado — adicionando manualmente..."
+            sed -i '' "/CODE_SIGN_IDENTITY =/a\\
+              DEVELOPMENT_TEAM = $TEAM_ID;
+            " $PBXPROJ_FILE
+          fi
 
       - name: Build and archive iOS app
         script: |
