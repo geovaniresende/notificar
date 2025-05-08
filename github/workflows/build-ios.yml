@@ -1,17 +1,14 @@
 name: Build iOS IPA
 
 on:
-  workflow_dispatch:  # Permite iniciar o workflow manualmente
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest  # Vai rodar em um ambiente macOS
-
+    runs-on: macos-latest
     steps:
-      # Passo 1: Baixar o código do repositório
       - uses: actions/checkout@v4
 
-      # Passo 2: Decodificar e instalar certificados e perfil de provisão
       - name: Decode Certificates
         run: |
           echo "$CERTIFICATE_BASE64" | base64 --decode > dist.p12
@@ -26,7 +23,6 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      # Passo 3: Construir o IPA
       - name: Build IPA
         run: |
           xcodebuild -workspace SeuApp.xcworkspace \
@@ -40,7 +36,6 @@ jobs:
             -exportOptionsPlist ExportOptions.plist \
             -exportPath $PWD/build
 
-      # Passo 4: Fazer upload do arquivo IPA
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
