@@ -1,29 +1,19 @@
 workflows:
-  ios-build:
-    name: iOS App Store Build
+  ios-release:
+    name: iOS Release Workflow
     environment:
-      flutter: stable
-      xcode: 16.3
-      cocoapods: default
       vars:
-        BUNDLE_ID: com.new.notificar
-        DEVELOPMENT_TEAM: WT5TSJ49FM
+        XCODE_WORKSPACE: "Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+      flutter: stable
+      xcode: latest
+    certificates:
+      - CERTIFICATE_P12
+    provisioning_profiles:
+      - PROVISIONING_PROFILE
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
-
-      - name: Fix Podfile for Codemagic
-        script: |
-          cat > ios/Podfile <<EOF
-          platform :ios, '13.0'
-
-          ENV['FLUTTER_ROOT'] ||= File.expand_path('../flutter')
-          load File.join(ENV['FLUTTER_ROOT'], 'packages', 'flutter_tools', 'bin', 'podhelper.rb')
-
-          target 'Runner' do
-            flutter_install_all_ios_pods(File.dirname(File.realpath(__FILE__)))
-          end
-          EOF
 
       - name: Install CocoaPods
         script: |
@@ -41,14 +31,14 @@ workflows:
           flutter build ios --release
           cd ios
           xcodebuild archive \
-            -workspace Runner.xcworkspace \
-            -scheme Runner \
+            -workspace $XCODE_WORKSPACE \
+            -scheme $XCODE_SCHEME \
             -configuration Release \
             -archivePath build/Runner.xcarchive \
-            -destination 'generic/platform=iOS' \
             -allowProvisioningUpdates \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="Notificar"
 
       - name: Export .ipa
@@ -61,10 +51,10 @@ workflows:
           <dict>
             <key>method</key>
             <string>app-store</string>
-            <key>signingStyle</key>
-            <string>manual</string>
             <key>teamID</key>
             <string>$DEVELOPMENT_TEAM</string>
+            <key>signingStyle</key>
+            <string>manual</string>
             <key>provisioningProfiles</key>
             <dict>
               <key>$BUNDLE_ID</key>
@@ -76,16 +66,9 @@ workflows:
 
           xcodebuild -exportArchive \
             -archivePath build/Runner.xcarchive \
-            -exportPath build/ipa \
+            -exportPath ../build/ipa \
             -exportOptionsPlist ExportOptions.plist \
             -allowProvisioningUpdates
 
     artifacts:
       - build/ipa/*.ipa
-
-# Certificados e perfis de provisionamento
-certificates:
-  - CERTIFICATE_P12
-
-provisioning_profiles:
-  - PROVISIONING_PROFILE
