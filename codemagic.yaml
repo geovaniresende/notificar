@@ -8,11 +8,6 @@ workflows:
       vars:
         BUNDLE_ID: com.new.notificar
         DEVELOPMENT_TEAM: WT5TSJ49FM
-    certificates:
-      - CERTIFICATE_P12
-    provisioning_profiles:
-      - PROVISIONING_PROFILE
-
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
@@ -87,3 +82,10 @@ workflows:
 
     artifacts:
       - build/ipa/*.ipa
+
+# Certificados e perfis de provisionamento
+certificates:
+  - CERTIFICATE_P12
+
+provisioning_profiles:
+  - PROVISIONING_PROFILE
