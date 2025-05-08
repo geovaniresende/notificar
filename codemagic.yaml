@@ -5,12 +5,13 @@ workflows:
       vars:
         XCODE_WORKSPACE: "Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
+        CERTIFICATE_P12: Encrypted(...) # Substituído automaticamente pelo Codemagic
+        CERTIFICATE_PASSWORD: Encrypted(...)
+        PROVISIONING_PROFILE: Encrypted(...)
+        DEVELOPMENT_TEAM: WT5TSJ49FM
+        BUNDLE_ID: com.new.notificar
       flutter: stable
       xcode: latest
-    certificates:
-      - CERTIFICATE_P12
-    provisioning_profiles:
-      - PROVISIONING_PROFILE
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
@@ -24,7 +25,12 @@ workflows:
       - name: Set up code signing
         script: |
           keychain initialize
-          keychain add-certificates
+          echo $CERTIFICATE_P12 | base64 --decode > certificate.p12
+          echo $PROVISIONING_PROFILE | base64 --decode > profile.mobileprovision
+          keychain add-certificates --certificate certificate.p12 --certificate-password $CERTIFICATE_PASSWORD
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          uuid=$(grep -a -o 'UUID[^<]*' profile.mobileprovision | head -1 | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$uuid.mobileprovision
 
       - name: Build and archive iOS app
         script: |
