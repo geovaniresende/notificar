@@ -29,7 +29,14 @@ jobs:
       # Passo 3: Construir o IPA
       - name: Build IPA
         run: |
-          xcodebuild -workspace ios/Runner.xcworkspace \
+          # Defina o caminho correto para o repositório
+          REPO_PATH=$GITHUB_WORKSPACE/notificar-corrigido-main
+          
+          # Caminhos para o workspace e plist
+          WORKSPACE_PATH=$REPO_PATH/ios/Runner.xcworkspace
+          EXPORT_OPTIONS_PATH=$REPO_PATH/ios/ExportOptions.plist
+          
+          xcodebuild -workspace $WORKSPACE_PATH \
             -scheme Runner \
             -configuration Release \
             -archivePath $PWD/build/Runner.xcarchive \
@@ -37,7 +44,7 @@ jobs:
 
           xcodebuild -exportArchive \
             -archivePath $PWD/build/Runner.xcarchive \
-            -exportOptionsPlist ios/ExportOptions.plist \
+            -exportOptionsPlist $EXPORT_OPTIONS_PATH \
             -exportPath $PWD/build
 
       # Passo 4: Criar uma release no GitHub
