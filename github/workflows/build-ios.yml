@@ -29,45 +29,43 @@ jobs:
       # Passo 3: Construir o IPA
       - name: Build IPA
         run: |
-          xcodebuild -workspace SeuApp.xcworkspace \
-            -scheme SeuApp \
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
             -configuration Release \
-            -archivePath $PWD/build/SeuApp.xcarchive \
+            -archivePath $PWD/build/Runner.xcarchive \
             archive
 
           xcodebuild -exportArchive \
-            -archivePath $PWD/build/SeuApp.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
+            -archivePath $PWD/build/Runner.xcarchive \
+            -exportOptionsPlist ios/ExportOptions.plist \
             -exportPath $PWD/build
 
       # Passo 4: Criar uma release no GitHub
       - name: Create GitHub Release
         id: release
         run: |
-          # Cria uma nova release no GitHub
-          TAG_NAME="v1.0.0"  # Defina a tag da release como quiser (por exemplo, versão do app)
-          RELEASE_NAME="Release v1.0.0"  # Nome da release
+          TAG_NAME="v1.0.0"
+          RELEASE_NAME="Release v1.0.0"
           BODY="Release do app iOS"
-          
+
           RESPONSE=$(curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"tag_name": "'"$TAG_NAME"'", "name": "'"$RELEASE_NAME"'", "body": "'"$BODY"'", "draft": false, "prerelease": false}' \
             https://api.github.com/repos/${{ github.repository }}/releases)
-          
-          echo "Release criada com sucesso"
+
+          echo "$RESPONSE" > response.json
 
       # Passo 5: Fazer o upload do IPA para a Release criada
       - name: Upload IPA to Release
         run: |
-          # Faz o upload do IPA para a release no GitHub
-          RELEASE_ID=$(echo $RESPONSE | jq -r .id)  # ID da release criada
-          IPA_FILE_PATH="build/SeuApp.ipa"  # Caminho do arquivo IPA gerado
+          RELEASE_ID=$(cat response.json | jq -r .id)
+          IPA_FILE_PATH="build/Runner.ipa"
 
           curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/octet-stream" \
             --data-binary @"$IPA_FILE_PATH" \
-            https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=SeuApp.ipa
-          
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=Runner.ipa"
+
           echo "IPA enviado para a Release"
