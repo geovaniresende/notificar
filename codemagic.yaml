@@ -6,8 +6,6 @@ workflows:
       xcode: latest
       vars:
         BUNDLE_ID: com.new.notificar
-        DEVELOPMENT_TEAM: WT5TSJ49FM
-        CERTIFICATE_PASSWORD: 135013 
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
